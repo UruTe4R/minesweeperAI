@@ -229,6 +229,14 @@ class MinesweeperAI():
         sur_cellsのリストに保存されている。
         '''      
         new_sentence = Sentence(sur_cells, count)
+        if new_sentence.known_safes():
+            for cell in new_sentence.known_safes():
+                if cell not in self.safes and cell not in self.moves_made:
+                    self.mark_safe(cell)
+        if new_sentence.known_mines():
+            for cell in new_sentence.known_mines():
+                if cell not in self.mines and cell not in self.moves_made:
+                    self.mark_mine(cell)
         self.knowledge.append(new_sentence)
 
         # 4) Update sentence in knowledge based on new sentence
