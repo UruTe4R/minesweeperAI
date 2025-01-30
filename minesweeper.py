@@ -232,74 +232,77 @@ class MinesweeperAI():
         new_sentence = Sentence(sur_cells, count)
         self.knowledge.append(new_sentence)
         print("new_sentence.cells:", sorted(new_sentence.cells, key=lambda x: (x[0], x[1])), "new_sentence.count:", new_sentence.count)
+        
         if new_sentence.known_safes():
-            print("known_safes:", new_sentence.known_safes())
+            # print("known_safes:", new_sentence.known_safes())
             safe_cells = []
             for cell in new_sentence.known_safes():
                 if cell not in self.safes and cell not in self.moves_made:
                     safe_cells.append(cell)
-            print("safe_cells:", safe_cells)
+            # print("safe_cells:", safe_cells)
             for cell in safe_cells:
                 self.mark_safe(cell)
-            print("after_removal:", new_sentence.cells)
+            # print("after_removal:", new_sentence.cells)
         if new_sentence.known_mines():
-            print("known_mines:", new_sentence.known_mines())
+            # print("known_mines:", new_sentence.known_mines())
             mines = []
             for cell in new_sentence.known_mines():
                 if cell not in self.mines and cell not in self.moves_made:
                     mines.append(cell)
             for cell in mines:
                 self.mark_mine(cell)
-            print("after_removal:", new_sentence.cells)
+            # print("after_removal:", new_sentence.cells)
+
+        print("safe_cells:", sorted(self.safes - self.moves_made, key=lambda x: (x[0], x[1])))
+        print("mines:", sorted(self.mines, key=lambda x: (x[0], x[1])))
 
         additional_knowledges = []
-        # 4) Update sentence in knowledge based on new sentence
-        for sentence in self.knowledge[:-1]:
-            # Create new knowledge based on existing knowledge and new_sentence
-            
-            cells = sentence.cells - new_sentence.cells
-            mine_count = sentence.count - new_sentence.count
-            if mine_count < 0:
-                continue
-            # If there is no mines in cells, mark all cells as safe
-            new_knowledge = Sentence(cells, mine_count)
-            if new_knowledge.known_safes():
-                for cell in new_knowledge.known_safes():
+        
+        
+        
+
+        inferred_knowledges = []
+        
+
+        # import pdb; pdb.set_trace()
+
+        for i, s1 in enumerate(self.knowledge):
+            for j in range(i + 1, len(self.knowledge)):
+                print(i, j)
+                s2 = self.knowledge[j]
+                # print(sorted(s1.cells, key=lambda x: (x[0], x[1])), "=", s1.count, sorted(s2.cells, key=lambda x: (x[0], x[1])), "=", s2.count)
+                if s1.cells in s2.cells:
+                    temp_sentence = Sentence(s2.cells - s1.cells, s2.count - s1.count)
+                    inferred_knowledges.append(temp_sentence)
+                elif s2.cells in s1.cells:
+                    temp_sentence = Sentence(s1.cells - s2.cells, s1.count - s2.count)
+                    inferred_knowledges.append(temp_sentence)
+
+        self.knowledge.extend(inferred_knowledges)
+        kl = self.knowledge
+        for sentence in kl:
+            if sentence.known_safes():
+                # print("known_safes:", sentence.known_safes())
+                safe_cells = []
+                for cell in sentence.known_safes():
                     if cell not in self.safes and cell not in self.moves_made:
-                        print("untititititia;lsdfjkalsdf")
-                        self.mark_safe(cell)
-            if new_knowledge.known_mines():
-                for cell in new_knowledge.known_mines():
+                        safe_cells.append(cell)
+                # print("safe_cells:", safe_cells)
+                for cell in safe_cells:
+                    self.mark_safe(cell)
+                # print("after_removal:", sentence.cells)
+            if sentence.known_mines():
+                # print("known_mines:", sentence.known_mines())
+                mines = []
+                for cell in sentence.known_mines():
                     if cell not in self.mines and cell not in self.moves_made:
-                        self.mark_mine(cell)
-            additional_knowledges.append(new_knowledge)
-        
-        self.knowledge.extend(additional_knowledges)
-        
+                        mines.append(cell)
+                for cell in mines:
+                    self.mark_mine(cell)
+                # print("after_removal:", sentence.cells)
+
+
         print("cleaned_knowledge_countL", self.clean_knowledge())
-
-        for s in self.knowledge:
-            print(sorted(s.cells, key=lambda x: (x[0], x[1])), "=", s.count)
-        # inferred_knowledges = []
-
-        # for i, s1 in enumerate(self.knowledge):
-        #     for j in range(i + 1, len(self.knowledge)):
-                
-        #         s2 = self.knowledge[j]
-        #         print(sorted(s1.cells, key=lambda x: (x[0], x[1])), "=", s1.count, sorted(s2.cells, key=lambda x: (x[0], x[1])), "=", s2.count)
-        #         if s1.cells.issubset(s2.cells):
-        #             temp_sentence = Sentence(s2.cells - s1.cells, s2.count - s1.count)
-        #             temp_sentence.mark_mine(cell)
-        #             temp_sentence.mark_safe(cell)
-        #             inferred_knowledges.append(temp_sentence)
-        #         elif s2.cells.issubset(s1.cells):
-        #             temp_sentence = Sentence(s1.cells - s2.cells, s1.count - s2.count)
-        #             temp_sentence.mark_mine(cell)
-        #             temp_sentence.mark_safe(cell)
-        #             inferred_knowledges.append(temp_sentence)
-
-        # self.knowledge.extend(inferred_knowledges)
-
 
     def clean_knowledge(self):
         count = 0
@@ -318,11 +321,8 @@ class MinesweeperAI():
         This function may use the knowledge in self.mines, self.safes
         and self.moves_made, but should not modify any of those values.
         """
-        for sentence in self.knowledge:
-            if sentence.known_safes():
-                return sentence.known_safes().pop()
         # If there is no safe moves left that hasn't been made
-        if len(self.safes - self.moves_made) == 0:
+        if not self.safes - self.moves_made:
             return None
         # There should be a safe move that hasn't been made
         else:
