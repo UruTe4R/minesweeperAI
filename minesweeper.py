@@ -136,6 +136,7 @@ class Sentence():
         if cell in self.cells:
             # Remove cell from self.cells
             self.cells.remove(cell)
+            
             # -1 mine from self.count
             self.count -= 1
 
@@ -175,8 +176,10 @@ class MinesweeperAI():
         Marks a cell as a mine, and updates all knowledge
         to mark that cell as a mine as well.
         """
+
         self.mines.add(cell)
         for sentence in self.knowledge:
+
             sentence.mark_mine(cell)
 
     def mark_safe(self, cell):
@@ -186,6 +189,7 @@ class MinesweeperAI():
         """
         self.safes.add(cell)
         for sentence in self.knowledge:
+
             sentence.mark_safe(cell)
 
     def add_knowledge(self, cell, count):
@@ -225,36 +229,44 @@ class MinesweeperAI():
                             count -= 1    
                         else:
                             sur_cells.append((i, j))
-        '''
-        今現在いる地点のセルの周囲のセルがmoves_madeと真ん中のセル(現在地)を除いて
-        sur_cellsのリストに保存されている。
-        '''      
         new_sentence = Sentence(sur_cells, count)
+        self.knowledge.append(new_sentence)
+        print("new_sentence.cells:", sorted(new_sentence.cells, key=lambda x: (x[0], x[1])), "new_sentence.count:", new_sentence.count)
         if new_sentence.known_safes():
+            print("known_safes:", new_sentence.known_safes())
+            safe_cells = []
             for cell in new_sentence.known_safes():
                 if cell not in self.safes and cell not in self.moves_made:
-                    self.mark_safe(cell)
+                    safe_cells.append(cell)
+            print("safe_cells:", safe_cells)
+            for cell in safe_cells:
+                self.mark_safe(cell)
+            print("after_removal:", new_sentence.cells)
         if new_sentence.known_mines():
+            print("known_mines:", new_sentence.known_mines())
+            mines = []
             for cell in new_sentence.known_mines():
                 if cell not in self.mines and cell not in self.moves_made:
-                    self.mark_mine(cell)
-        self.knowledge.append(new_sentence)
+                    mines.append(cell)
+            for cell in mines:
+                self.mark_mine(cell)
+            print("after_removal:", new_sentence.cells)
 
         additional_knowledges = []
         # 4) Update sentence in knowledge based on new sentence
         for sentence in self.knowledge[:-1]:
-            # Create new knowledge based on knowledge in self.knowledge and new_sentence created by action
-            # if len(sentence.cells) < len(new_sentence.cells):
-            #     small_sentence = sentence
-
-             # is surrounding cells are overlapping with cells in sentence?
+            # Create new knowledge based on existing knowledge and new_sentence
+            
             cells = sentence.cells - new_sentence.cells
             mine_count = sentence.count - new_sentence.count
+            if mine_count < 0:
+                continue
             # If there is no mines in cells, mark all cells as safe
             new_knowledge = Sentence(cells, mine_count)
             if new_knowledge.known_safes():
                 for cell in new_knowledge.known_safes():
                     if cell not in self.safes and cell not in self.moves_made:
+                        print("untititititia;lsdfjkalsdf")
                         self.mark_safe(cell)
             if new_knowledge.known_mines():
                 for cell in new_knowledge.known_mines():
@@ -263,10 +275,39 @@ class MinesweeperAI():
             additional_knowledges.append(new_knowledge)
         
         self.knowledge.extend(additional_knowledges)
+        
+        print("cleaned_knowledge_countL", self.clean_knowledge())
+
+        for s in self.knowledge:
+            print(sorted(s.cells, key=lambda x: (x[0], x[1])), "=", s.count)
+        # inferred_knowledges = []
+
+        # for i, s1 in enumerate(self.knowledge):
+        #     for j in range(i + 1, len(self.knowledge)):
+                
+        #         s2 = self.knowledge[j]
+        #         print(sorted(s1.cells, key=lambda x: (x[0], x[1])), "=", s1.count, sorted(s2.cells, key=lambda x: (x[0], x[1])), "=", s2.count)
+        #         if s1.cells.issubset(s2.cells):
+        #             temp_sentence = Sentence(s2.cells - s1.cells, s2.count - s1.count)
+        #             temp_sentence.mark_mine(cell)
+        #             temp_sentence.mark_safe(cell)
+        #             inferred_knowledges.append(temp_sentence)
+        #         elif s2.cells.issubset(s1.cells):
+        #             temp_sentence = Sentence(s1.cells - s2.cells, s1.count - s2.count)
+        #             temp_sentence.mark_mine(cell)
+        #             temp_sentence.mark_safe(cell)
+        #             inferred_knowledges.append(temp_sentence)
+
+        # self.knowledge.extend(inferred_knowledges)
 
 
-
-
+    def clean_knowledge(self):
+        count = 0
+        for sentence in self.knowledge:
+            if sentence.cells == set():
+                self.knowledge.remove(sentence)
+                count += 1
+        return count
 
     def make_safe_move(self):
         """
