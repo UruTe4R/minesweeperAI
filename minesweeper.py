@@ -1,6 +1,5 @@
 import itertools
 import random
-import math
 
 
 class Minesweeper():
@@ -253,30 +252,23 @@ class MinesweeperAI():
                 self.mark_mine(cell)
             # print("after_removal:", new_sentence.cells)
 
-        print("safe_cells:", sorted(self.safes - self.moves_made, key=lambda x: (x[0], x[1])))
-        print("mines:", sorted(self.mines, key=lambda x: (x[0], x[1])))
+        
 
-        additional_knowledges = []
-        
-        
-        
 
         inferred_knowledges = []
         
-
-        # import pdb; pdb.set_trace()
-
         for i, s1 in enumerate(self.knowledge):
             for j in range(i + 1, len(self.knowledge)):
-                print(i, j)
                 s2 = self.knowledge[j]
                 # print(sorted(s1.cells, key=lambda x: (x[0], x[1])), "=", s1.count, sorted(s2.cells, key=lambda x: (x[0], x[1])), "=", s2.count)
-                if s1.cells in s2.cells:
+                if s1.cells < s2.cells:
                     temp_sentence = Sentence(s2.cells - s1.cells, s2.count - s1.count)
-                    inferred_knowledges.append(temp_sentence)
-                elif s2.cells in s1.cells:
+                    if temp_sentence.known_safes():
+                        inferred_knowledges.append(temp_sentence)
+                elif s2.cells < s1.cells:
                     temp_sentence = Sentence(s1.cells - s2.cells, s1.count - s2.count)
-                    inferred_knowledges.append(temp_sentence)
+                    if temp_sentence.known_safes():
+                        inferred_knowledges.append(temp_sentence)
 
         self.knowledge.extend(inferred_knowledges)
         kl = self.knowledge
@@ -300,8 +292,13 @@ class MinesweeperAI():
                 for cell in mines:
                     self.mark_mine(cell)
                 # print("after_removal:", sentence.cells)
+                
+        print("length:", len(self.knowledge))
+        for sentence in self.knowledge:
+            print("cells:", sorted(sentence.cells, key=lambda x: (x[0], x[1])), "count:", sentence.count)
 
-
+        print("safe_cells:", sorted(self.safes - self.moves_made, key=lambda x: (x[0], x[1])))
+        print("mines:", sorted(self.mines, key=lambda x: (x[0], x[1])))
         print("cleaned_knowledge_countL", self.clean_knowledge())
 
     def clean_knowledge(self):
