@@ -1,5 +1,6 @@
 import itertools
 import random
+import math
 
 
 class Minesweeper():
@@ -239,27 +240,31 @@ class MinesweeperAI():
                     self.mark_mine(cell)
         self.knowledge.append(new_sentence)
 
+        additional_knowledges = []
         # 4) Update sentence in knowledge based on new sentence
         for sentence in self.knowledge[:-1]:
             # Create new knowledge based on knowledge in self.knowledge and new_sentence created by action
             # if len(sentence.cells) < len(new_sentence.cells):
             #     small_sentence = sentence
 
-            if sentence.cells - new_sentence.cells: # is surrounding cells are overlapping with cells in sentence?
-                cells = sentence.cells - new_sentence.cells
-                mine_count = sentence.count - new_sentence.count
-                # If there is no mines in cells, mark all cells as safe
-                new_knowledge = Sentence(cells, mine_count)
-                if new_knowledge.known_safes():
-                    for cell in new_knowledge.known_safes():
-                        if cell not in self.safes and cell not in self.moves_made:
-                            self.mark_safe(cell)
-                if new_knowledge.known_mines():
-                    for cell in new_knowledge.known_mines():
-                        if cell not in self.mines and cell not in self.moves_made:
-                            self.mark_mine(cell)
-                self.knowledge.append(new_knowledge)
+             # is surrounding cells are overlapping with cells in sentence?
+            cells = sentence.cells - new_sentence.cells
+            mine_count = sentence.count - new_sentence.count
+            # If there is no mines in cells, mark all cells as safe
+            new_knowledge = Sentence(cells, mine_count)
+            if new_knowledge.known_safes():
+                for cell in new_knowledge.known_safes():
+                    if cell not in self.safes and cell not in self.moves_made:
+                        self.mark_safe(cell)
+            if new_knowledge.known_mines():
+                for cell in new_knowledge.known_mines():
+                    if cell not in self.mines and cell not in self.moves_made:
+                        self.mark_mine(cell)
+            additional_knowledges.append(new_knowledge)
         
+        self.knowledge.extend(additional_knowledges)
+
+
 
 
 
